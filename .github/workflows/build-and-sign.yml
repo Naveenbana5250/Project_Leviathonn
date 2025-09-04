@@ -78,7 +78,7 @@ jobs:
       - name: Apply Kyverno foundation policies
         env:
           KUBECONFIG: ${{ env.KUBECONFIG }}
-        run: kubectl apply -f kyverno-foundation.yaml
+        run: kubectl apply -f Phase1/cluster/kyverno/policies/kyverno-foundation.yaml
 
       - name: Negative test unsigned image
         env:
@@ -109,7 +109,7 @@ jobs:
               .spec.template.metadata.labels."app.kubernetes.io/name" = (.spec.template.metadata.labels."app.kubernetes.io/name" // "leviathan-app") |
               .spec.template.metadata.labels.owner = (.spec.template.metadata.labels.owner // "defense-team") |
               .spec.template.metadata.labels.env = (.spec.template.metadata.labels.env // "dev")
-            ' deployment.yaml
+            ' Phase1/cluster/manifests/deployment.yaml
 
       - name: Pin digest in manifest
         uses: mikefarah/yq@v4.44.3
@@ -118,12 +118,12 @@ jobs:
             yq -i '
               (.spec.template.spec.containers[] | select(.name == "leviathan-app").image) = strenv(IMAGE) |
               (.spec.template.spec.initContainers[]? | select(.name == "leviathan-app").image) = strenv(IMAGE)
-            ' deployment.yaml
+            ' Phase1/cluster/manifests/deployment.yaml
 
       - name: Deploy signed workload
         env:
           KUBECONFIG: ${{ env.KUBECONFIG }}
-        run: kubectl apply -f deployment.yaml
+        run: kubectl apply -f Phase1/cluster/manifests/deployment.yaml
 
       - name: Cleanup
         if: always()
