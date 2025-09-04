@@ -65,7 +65,7 @@ jobs:
           KUBECONFIG: ${{ env.KUBECONFIG }}
         run: |
           echo "Cleaning up any stuck Kyverno Helm release secrets..."
-          kubectl -n kyverno get secret -l "name=kyverno,owner=helm" -o name | xargs -r kubectl delete
+          kubectl -n kyverno get secret -l "name=kyverno,owner=helm" -o name | xargs -r kubectl delete --ignore-not-found
 
       - name: Install or upgrade Kyverno
         env:
