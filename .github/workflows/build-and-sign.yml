@@ -60,18 +60,19 @@ jobs:
           echo "${{ secrets.KUBECONFIG_CONTENT }}" > kubeconfig
           echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
 
-      - name: Install or upgrade Kyverno safely
+      - name: Cleanup stuck Kyverno Helm releases
+        env:
+          KUBECONFIG: ${{ env.KUBECONFIG }}
+        run: |
+          echo "Cleaning up any stuck Kyverno Helm release secrets..."
+          kubectl -n kyverno get secret -l "name=kyverno,owner=helm" -o name | xargs -r kubectl delete
+
+      - name: Install or upgrade Kyverno
         env:
           KUBECONFIG: ${{ env.KUBECONFIG }}
         run: |
           helm repo add kyverno https://kyverno.github.io/kyverno/
           helm repo update
-          STATUS=$(helm status kyverno -n kyverno --show-notes 2>/dev/null || echo "not-found")
-          echo "Current Kyverno release status: $STATUS"
-          if [[ "$STATUS" == *"pending"* ]]; then
-            echo "Detected stuck Kyverno release. Uninstalling..."
-            helm uninstall kyverno -n kyverno
-          fi
           helm upgrade --install kyverno kyverno/kyverno \
             --namespace kyverno --create-namespace \
             --set webhook.failurePolicy=Fail --wait --timeout=300s
