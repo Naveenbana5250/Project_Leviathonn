@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leviathan-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leviathan-app
+  template:
+    metadata:
+      labels:
+        app: leviathan-app
+    spec:
+      containers:
+      - name: leviathan-app
+        image: naveenbana5250/leviathan-app:latest  # signed image
