@@ -3,6 +3,10 @@ on:
   push:
     branches: [ "main" ]
 
+concurrency:
+  group: kyverno-deploy
+  cancel-in-progress: true
+
 jobs:
   supply-chain:
     runs-on: ubuntu-latest
@@ -56,16 +60,22 @@ jobs:
           echo "${{ secrets.KUBECONFIG_CONTENT }}" > kubeconfig
           echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
 
-      - name: Install Kyverno
+      - name: Install or upgrade Kyverno safely
         env:
           KUBECONFIG: ${{ env.KUBECONFIG }}
         run: |
           helm repo add kyverno https://kyverno.github.io/kyverno/
           helm repo update
+          STATUS=$(helm status kyverno -n kyverno --show-notes 2>/dev/null || echo "not-found")
+          echo "Current Kyverno release status: $STATUS"
+          if [[ "$STATUS" == *"pending"* ]]; then
+            echo "Detected stuck Kyverno release. Uninstalling..."
+            helm uninstall kyverno -n kyverno
+          fi
           helm upgrade --install kyverno kyverno/kyverno \
             --namespace kyverno --create-namespace \
-            --set webhook.failurePolicy=Fail --wait
-          kubectl -n kyverno rollout status deploy -l app.kubernetes.io/name=kyverno --timeout=180s
+            --set webhook.failurePolicy=Fail --wait --timeout=300s
+          kubectl -n kyverno rollout status deploy -l app.kubernetes.io/name=kyverno --timeout=300s
 
       - name: Create or update cosign public key secret
         env:
