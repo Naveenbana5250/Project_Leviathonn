@@ -1,0 +1,15 @@
+# AFTER
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: kill-leviathan-pod
+  namespace: default
+spec:
+  action: pod-kill
+  mode: one
+  duration: "15m"
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      "app.kubernetes.io/name": "leviathan-app"
