@@ -89,7 +89,7 @@ jobs:
       - name: Apply Kyverno foundation policies
         env:
           KUBECONFIG: ${{ env.KUBECONFIG }}
-        run: kubectl apply -f Phase1/cluster/kyverno/policies/kyverno-foundation.yaml
+        run:  kubectl apply --server-side --force-conflicts -f Phase1/cluster/kyverno/policies/kyverno-foundation.yaml
 
       - name: Negative test unsigned image
         env:
